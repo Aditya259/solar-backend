@@ -4,15 +4,11 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-
-import org.apache.commons.collections4.map.HashedMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,14 +19,19 @@ import com.solar.model.ExtraDetails;
 import com.solar.model.FilterData;
 import com.solar.model.RequestObject;
 import com.solar.repository.ContactPersonDetailsRepository;
+import com.solar.repository.CustDataRepository;
 import com.solar.repository.CustomerDetailsRepository;
 import com.solar.repository.ExtraDetailsRepository;
+import com.solar.utils.PropertyValues;
 
 @Service
 public class InterationLogServiceImpl {
 
 	@Autowired
-	private EntityManager entityManager;
+	PropertyValues propertyValues;
+
+	@Autowired
+	CustDataRepository custDataRepository;
 
 	@Autowired
 	ExtraDetailsRepository extraDetailsRepository;
@@ -41,310 +42,186 @@ public class InterationLogServiceImpl {
 	@Autowired
 	ContactPersonDetailsRepository contactPersonDetailsRepository;
 
-	public List<CustData> getFilterdData(FilterData filterData) throws ParseException {
-		System.err.println("filterData = " + filterData);
-		StringBuffer sb1 = new StringBuffer();
-		Map<String, String> quer = new HashedMap<String, String>();
-		sb1.append("select c from CustData c where ");
-
+	private CustData buildCustDataObject(FilterData filterData) {
+		CustData custDataObject = new CustData();
 		if (filterData.getEnquiryId() != null && !filterData.getEnquiryId().isEmpty()) {
-			sb1.append("c.enquiryId = :enquiryId AND ");
-			quer.put("enquiryId", filterData.getEnquiryId());
+			custDataObject.setEnquiryId(filterData.getEnquiryId());
 		}
-
 		if (filterData.getCustomerName() != null && !filterData.getCustomerName().isEmpty()) {
-			sb1.append("c.customerName = :customerName AND ");
-			quer.put("customerName", filterData.getCustomerName());
+			custDataObject.setCustomerName(filterData.getCustomerName());
 		}
-
 		if (filterData.getCustomerCode() != null && !filterData.getCustomerCode().isEmpty()) {
-			sb1.append("c.customerCode = :customerCode AND ");
-			quer.put("customerCode", filterData.getCustomerCode());
+			custDataObject.setCustomerCode(filterData.getCustomerCode());
 		}
-
 		if (filterData.getSector() != null && !filterData.getSector().isEmpty()) {
-			sb1.append("c.sector = :sector AND ");
-			quer.put("sector", filterData.getSector());
+			custDataObject.setSector(filterData.getSector());
 		}
-
 		if (filterData.getSubsidary() != null && !filterData.getSubsidary().isEmpty()) {
-			sb1.append("c.subsidaryCompany = :subsidaryCompany AND ");
-			quer.put("subsidaryCompany", filterData.getSubsidary());
+			custDataObject.setSubsidaryCompany(filterData.getSubsidary());
 		}
-
 		if (filterData.getCompany() != null && !filterData.getCompany().isEmpty()) {
-			sb1.append("c.company = :company AND ");
-			quer.put("company", filterData.getCompany());
+			custDataObject.setCompany(filterData.getCompany());
 		}
-
 		if (filterData.getCountry() != null && !filterData.getCountry().isEmpty()) {
-			sb1.append("c.country = :country AND ");
-			quer.put("country", filterData.getCountry());
+			custDataObject.setCountry(filterData.getCountry());
 		}
-
 		if (filterData.getState() != null && !filterData.getState().isEmpty()) {
-			sb1.append("c.state = :state AND ");
-			quer.put("state", filterData.getState());
+			custDataObject.setState(filterData.getState());
 		}
-		
-		String sb2 = sb1.toString().substring(0, sb1.length() - 4);
+		return custDataObject;
+	}
 
-		System.err.println("sb2 =" + sb2);
-
-		Query query1 = entityManager.createQuery(sb2);
-		for (Map.Entry<String, String> entry : quer.entrySet()) {
-			if (entry.getKey().equals("customerCode")) {
-				query1.setParameter(entry.getKey(), entry.getValue());
-			} else {
-				query1.setParameter(entry.getKey(), entry.getValue());
-			}
+	private CustData updateDateInCustDate(CustData custData) throws ParseException {
+		if (custData.getExtLogDate() != null) {
+			Date date = inputFormat().parse(custData.getExtLogDate().toString());
+			custData.setDateToDisplay(outputFormat().format(date));
 		}
+		if (custData.getSelectedcalldatePicker() != null) {
+			Date date = inputFormat().parse(custData.getSelectedcalldatePicker().toString());
+			custData.setDateToDisplay(outputFormat().format(date));
+		}
+		if (custData.getSelectedSmsdatePicker() != null) {
+			Date date = inputFormat().parse(custData.getSelectedSmsdatePicker().toString());
+			custData.setDateToDisplay(outputFormat().format(date));
+		}
+		if (custData.getSelectedSvidatePicker() != null) {
+			Date date = inputFormat().parse(custData.getSelectedSvidatePicker().toString());
+			custData.setDateToDisplay(outputFormat().format(date));
+		}
+		if (custData.getSelectedOmidatePicker() != null) {
+			Date date = inputFormat().parse(custData.getSelectedOmidatePicker().toString());
+			custData.setDateToDisplay(outputFormat().format(date));
+		}
+		return custData;
+	}
+
+	private CustData updatePurposeInCustDate(CustData custData) {
+		if (custData.getExtPurposeOfEmail() != null) {
+			custData.setExtPurposeOfEmail(custData.getExtPurposeOfEmail());
+		}
+		if (custData.getSelectedCallPurposeOfEmail() != null) {
+			custData.setExtPurposeOfEmail(custData.getSelectedCallPurposeOfEmail());
+		}
+		if (custData.getSelectedSmsPurposeOfEmail() != null) {
+			custData.setExtPurposeOfEmail(custData.getSelectedSmsPurposeOfEmail());
+		}
+		if (custData.getSelectedSviPurposeOfEmail() != null) {
+			custData.setExtPurposeOfEmail(custData.getSelectedSviPurposeOfEmail());
+		}
+		if (custData.getSelectedOmiPurposeOfEmail() != null) {
+			custData.setExtPurposeOfEmail(custData.getSelectedOmiPurposeOfEmail());
+		}
+		return custData;
+	}
+
+	public boolean checkPurposeCustData(CustData custData, FilterData filterData) {
+		boolean purpose = false;
+		if (custData.getExtPurposeOfEmail() != null
+				&& filterData.getPurpose().equals(custData.getExtPurposeOfEmail())) {
+			custData.setExtPurposeOfEmail(custData.getExtPurposeOfEmail());
+			purpose = true;
+		}
+		if (custData.getSelectedCallPurposeOfEmail() != null
+				&& filterData.getPurpose().equals(custData.getSelectedCallPurposeOfEmail())) {
+			custData.setExtPurposeOfEmail(custData.getSelectedCallPurposeOfEmail());
+			purpose = true;
+		}
+		if (custData.getSelectedSmsPurposeOfEmail() != null
+				&& filterData.getPurpose().equals(custData.getSelectedSmsPurposeOfEmail())) {
+			custData.setExtPurposeOfEmail(custData.getSelectedSmsPurposeOfEmail());
+			purpose = true;
+		}
+		if (custData.getSelectedSviPurposeOfEmail() != null
+				&& filterData.getPurpose().equals(custData.getSelectedSviPurposeOfEmail())) {
+			custData.setExtPurposeOfEmail(custData.getSelectedSviPurposeOfEmail());
+			purpose = true;
+		}
+		if (custData.getSelectedOmiPurposeOfEmail() != null
+				&& filterData.getPurpose().equals(custData.getSelectedOmiPurposeOfEmail())) {
+			custData.setExtPurposeOfEmail(custData.getSelectedOmiPurposeOfEmail());
+			purpose = true;
+		}
+		return purpose;
+	}
+
+	public boolean checkDateCustData(CustData custData, FilterData filterData) throws ParseException {
+		boolean dateFilter = false;
+		if (custData.getExtLogDate() != null && filterData.getFromDate() != null && filterData.getToDate() != null
+				&& !filterData.getFromDate().isEmpty() && !filterData.getToDate().isEmpty()
+				&& custData.getExtLogDate()
+						.after(new SimpleDateFormat(propertyValues.getFormatyyMMdd()).parse(filterData.getFromDate()))
+				&& custData.getExtLogDate().before(new SimpleDateFormat("yyyy-MM-dd").parse(filterData.getToDate()))) {
+			dateFilter = true;
+		}
+		if (custData.getSelectedcalldatePicker() != null && filterData.getFromDate() != null
+				&& filterData.getToDate() != null && !filterData.getFromDate().isEmpty()
+				&& !filterData.getToDate().isEmpty()
+				&& custData.getSelectedcalldatePicker()
+						.after(new SimpleDateFormat(propertyValues.getFormatyyMMdd()).parse(filterData.getFromDate()))
+				&& custData.getSelectedcalldatePicker()
+						.before(new SimpleDateFormat(propertyValues.getFormatyyMMdd()).parse(filterData.getToDate()))) {
+			dateFilter = true;
+		}
+
+		if (custData.getSelectedSmsdatePicker() != null && filterData.getFromDate() != null
+				&& filterData.getToDate() != null && !filterData.getFromDate().isEmpty()
+				&& !filterData.getToDate().isEmpty()
+				&& custData.getSelectedSmsdatePicker()
+						.after(new SimpleDateFormat(propertyValues.getFormatyyMMdd()).parse(filterData.getFromDate()))
+				&& custData.getSelectedSmsdatePicker()
+						.before(new SimpleDateFormat(propertyValues.getFormatyyMMdd()).parse(filterData.getToDate()))) {
+			dateFilter = true;
+		}
+		if (custData.getSelectedSvidatePicker() != null && filterData.getFromDate() != null
+				&& filterData.getToDate() != null && !filterData.getFromDate().isEmpty()
+				&& !filterData.getToDate().isEmpty()
+				&& custData.getSelectedSvidatePicker()
+						.after(new SimpleDateFormat(propertyValues.getFormatyyMMdd()).parse(filterData.getFromDate()))
+				&& custData.getSelectedSvidatePicker()
+						.before(new SimpleDateFormat(propertyValues.getFormatyyMMdd()).parse(filterData.getToDate()))) {
+			dateFilter = true;
+		}
+		if (custData.getSelectedOmidatePicker() != null && filterData.getFromDate() != null
+				&& filterData.getToDate() != null && !filterData.getFromDate().isEmpty()
+				&& !filterData.getToDate().isEmpty()
+				&& custData.getSelectedOmidatePicker()
+						.after(new SimpleDateFormat(propertyValues.getFormatyyMMdd()).parse(filterData.getFromDate()))
+				&& custData.getSelectedOmidatePicker()
+						.before(new SimpleDateFormat(propertyValues.getFormatyyMMdd()).parse(filterData.getToDate()))) {
+			dateFilter = true;
+		}
+		return dateFilter;
+	}
+
+	public List<CustData> getFilterdData(FilterData filterData) throws ParseException {
 		boolean type = false;
 		boolean purpose = false;
 		boolean dateFilter = false;
-		boolean empFilter =false;
-		List<CustData> resultList = query1.getResultList();
+		CustData custDataObject = buildCustDataObject(filterData);
+		List<CustData> resultList = custDataRepository.filterCustomData(custDataObject);
 		for (CustData custData : resultList) {
-			DateFormat inputFormat1 = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.S");
-			DateFormat outputFormat = new SimpleDateFormat("dd-MM-yyyy");
-			//validation on type			
-			if(custData.getExtLogDate()!=null) {
-				Date date = inputFormat1.parse(custData.getExtLogDate().toString());
-				custData.setDateToDisplay(outputFormat.format(date));
-				}
-				if(custData.getSelectedcalldatePicker()!=null) {
-					Date date = inputFormat1.parse(custData.getSelectedcalldatePicker().toString());
-					custData.setDateToDisplay(outputFormat.format(date));
-				}
-				if(custData.getSelectedSmsdatePicker()!=null) {
-					Date date = inputFormat1.parse(custData.getSelectedSmsdatePicker().toString());
-					custData.setDateToDisplay(outputFormat.format(date));
-				}
-				if(custData.getSelectedSvidatePicker()!=null) {
-					Date date = inputFormat1.parse(custData.getSelectedSvidatePicker().toString());
-					custData.setDateToDisplay(outputFormat.format(date));
-				}
-				if(custData.getSelectedOmidatePicker()!=null) {
-					Date date = inputFormat1.parse(custData.getSelectedOmidatePicker().toString());
-					custData.setDateToDisplay(outputFormat.format(date));
-				}
-				if(custData.getExtPurposeOfEmail()!=null) {
-					custData.setExtPurposeOfEmail(custData.getExtPurposeOfEmail());
-				}
-				if(custData.getSelectedCallPurposeOfEmail()!=null) {
-					custData.setExtPurposeOfEmail(custData.getSelectedCallPurposeOfEmail());
-				}
-				if(custData.getSelectedSmsPurposeOfEmail()!=null) {
-					custData.setExtPurposeOfEmail(custData.getSelectedSmsPurposeOfEmail());
-				}
-				if(custData.getSelectedSviPurposeOfEmail()!=null) {
-					custData.setExtPurposeOfEmail(custData.getSelectedSviPurposeOfEmail());
-				}
-				if(custData.getSelectedOmiPurposeOfEmail() !=null) {
-					custData.setExtPurposeOfEmail(custData.getSelectedOmiPurposeOfEmail());
-				}
-
-				if(filterData.getType()!=null && !filterData.getType().isEmpty()) {
-					List<String> listOfTypeFromDb = custData.getExtModeOfContact();
-					if(listOfTypeFromDb.contains(filterData.getType())) {
-						//entityManager.close();
-						//return resultList;
-						type = true;
-					}else {
-						//entityManager.close();
-						//return new ArrayList<>();
-						type = false;
-					}
-				}
-				
-				if(filterData.getPurpose()!=null && !filterData.getPurpose().isEmpty()) {
-					
-					if(custData.getExtPurposeOfEmail()!=null) {
-						if(filterData.getPurpose().equals(custData.getExtPurposeOfEmail())) {
-						custData.setExtPurposeOfEmail(custData.getExtPurposeOfEmail());
-						//entityManager.close();
-						//return resultList;
-						purpose = true;
-						}
-					}
-					if(custData.getSelectedCallPurposeOfEmail()!=null) {
-						if(filterData.getPurpose().equals(custData.getSelectedCallPurposeOfEmail())) {
-						custData.setExtPurposeOfEmail(custData.getSelectedCallPurposeOfEmail());
-						//entityManager.close();
-						//return resultList;
-						purpose = true;
-						}
-					}
-					if(custData.getSelectedSmsPurposeOfEmail()!=null) {
-						if(filterData.getPurpose().equals(custData.getSelectedSmsPurposeOfEmail())) {
-						custData.setExtPurposeOfEmail(custData.getSelectedSmsPurposeOfEmail());
-						//entityManager.close();
-						//return resultList;
-						purpose = true;
-						}
-					}
-					if(custData.getSelectedSviPurposeOfEmail()!=null) {
-						if(filterData.getPurpose().equals(custData.getSelectedSviPurposeOfEmail())) {
-						custData.setExtPurposeOfEmail(custData.getSelectedSviPurposeOfEmail());
-						//entityManager.close();
-						//return resultList;
-						purpose = true;
-						}
-					}
-					if(custData.getSelectedOmiPurposeOfEmail() !=null) {
-						if(filterData.getPurpose().equals(custData.getSelectedOmiPurposeOfEmail())) {
-						custData.setExtPurposeOfEmail(custData.getSelectedOmiPurposeOfEmail());
-						//entityManager.close();
-						//return resultList;
-						purpose = true;
-						}
-					}
-				}
-				
-				if(custData.getExtLogDate()!=null && filterData.getFromDate()!=null && filterData.getToDate()!=null && !filterData.getFromDate().isEmpty() && !filterData.getToDate().isEmpty()) {
-					System.err.println(filterData.getFromDate());
-					Date datefrom=new SimpleDateFormat("yyyy-MM-dd").parse(filterData.getFromDate());  
-					Date dateTo=new SimpleDateFormat("yyyy-MM-dd").parse(filterData.getToDate());  
-					if(custData.getExtLogDate().after(datefrom) && custData.getExtLogDate().before(dateTo)) {
-						dateFilter = true;
-					}
-				}
-				
-				if(custData.getSelectedcalldatePicker()!=null && filterData.getFromDate()!=null && filterData.getToDate()!=null && !filterData.getFromDate().isEmpty() && !filterData.getToDate().isEmpty()) {
-					System.err.println(filterData.getFromDate());
-					Date datefrom=new SimpleDateFormat("yyyy-MM-dd").parse(filterData.getFromDate());  
-					Date dateTo=new SimpleDateFormat("yyyy-MM-dd").parse(filterData.getToDate());  
-					if(custData.getSelectedcalldatePicker().after(datefrom) && custData.getSelectedcalldatePicker().before(dateTo)) {
-						dateFilter = true;
-					}
-				}
-				
-				if(custData.getSelectedSmsdatePicker()!=null && filterData.getFromDate()!=null && filterData.getToDate()!=null && !filterData.getFromDate().isEmpty() && !filterData.getToDate().isEmpty()) {
-					System.err.println(filterData.getFromDate());
-					Date datefrom=new SimpleDateFormat("yyyy-MM-dd").parse(filterData.getFromDate());  
-					Date dateTo=new SimpleDateFormat("yyyy-MM-dd").parse(filterData.getToDate());  
-					if(custData.getSelectedSmsdatePicker().after(datefrom) && custData.getSelectedSmsdatePicker().before(dateTo)) {
-						dateFilter = true;
-					}
-				}
-				if(custData.getSelectedSvidatePicker()!=null && filterData.getFromDate()!=null && filterData.getToDate()!=null && !filterData.getFromDate().isEmpty() && !filterData.getToDate().isEmpty()) {
-					System.err.println(filterData.getFromDate());
-					Date datefrom=new SimpleDateFormat("yyyy-MM-dd").parse(filterData.getFromDate());  
-					Date dateTo=new SimpleDateFormat("yyyy-MM-dd").parse(filterData.getToDate());  
-					if(custData.getSelectedSvidatePicker().after(datefrom) && custData.getSelectedSvidatePicker().before(dateTo)) {
-						dateFilter = true;
-					}
-				}
-				if(custData.getSelectedOmidatePicker()!=null && filterData.getFromDate()!=null && filterData.getToDate()!=null && !filterData.getFromDate().isEmpty() && !filterData.getToDate().isEmpty()) {
-					System.err.println(filterData.getFromDate());
-					Date datefrom=new SimpleDateFormat("yyyy-MM-dd").parse(filterData.getFromDate());  
-					Date dateTo=new SimpleDateFormat("yyyy-MM-dd").parse(filterData.getToDate());  
-					if(custData.getSelectedOmidatePicker().after(datefrom) && custData.getSelectedOmidatePicker().before(dateTo)) {
-						dateFilter = true;
-					}
-				}
-		
-				//if(custData.getEmployeeName().contains(filterData.getEmployee())){
-					//empFilter = true;
-				//}
-				
-		}
-
-		System.err.println("resultList outside =" + resultList);
-		if(type && purpose && dateFilter) {
-			entityManager.close();
-			return resultList;
-		}
-		entityManager.close();
-		return new ArrayList<>();
-
-	}
-
-	public List<CustData> getFilterdData1(FilterData filterData) throws ParseException {
-		StringBuffer sb1 = new StringBuffer();
-		Map<String, String> quer = new HashedMap<String, String>();
-		try {
-			sb1.append("select c from CustData c where ");
-			if (filterData.getCompany() != null && !filterData.getCompany().isEmpty()) {
-				sb1.append("c.company = :company AND ");
-				quer.put("company", filterData.getCompany());
-			}
-			if (filterData.getCountry() != null && !filterData.getCountry().isEmpty()) {
-				sb1.append("c.country = :country AND ");
-				quer.put("country", filterData.getCountry());
-			}
-			if (filterData.getCustomerCode() != null && !filterData.getCustomerCode().isEmpty()) {
-				sb1.append("c.customerCode = :customerCode AND ");
-				quer.put("customerCode", filterData.getCustomerCode());
-			}
-			if (filterData.getCustomerName() != null && !filterData.getCustomerName().isEmpty()) {
-				sb1.append("c.customerName = :customerName AND ");
-				quer.put("customerName", filterData.getCustomerName());
-			}
-			if (filterData.getFromDate() != null && !filterData.getFromDate().isEmpty()) {
-				sb1.append("c.extLogDate >= :extLogDate AND ");
-				quer.put("extLogDate", filterData.getFromDate());
-			}
-			if (filterData.getPurpose() != null && !filterData.getPurpose().isEmpty()) {
-				sb1.append("c.extPurposeOfEmail = :extPurposeOfEmail AND ");
-				quer.put("extPurposeOfEmail", filterData.getPurpose());
-			}
-			if (filterData.getSubsidary() != null && !filterData.getSubsidary().isEmpty()) {
-				sb1.append("c.subsidaryCompany = :subsidaryCompany AND ");
-				quer.put("subsidaryCompany", filterData.getSubsidary());
-			}
-			if (filterData.getToDate() != null && !filterData.getToDate().isEmpty()) {
-				sb1.append("c.extLogDate <= :extLogToDate AND ");
-				quer.put("extLogToDate", filterData.getToDate());
-			}
-			if (filterData.getSector() != null && !filterData.getSector().isEmpty()) {
-				sb1.append("c.sector = :sector AND ");
-				quer.put("sector", filterData.getSector());
-			}
-			/**
-			 * if (filterData.getType()!=null && !filterData.getType().isEmpty()) {
-			 * sb1.append("c.extModeOfContact = :extModeOfContact AND "); if
-			 * (filterData.getType().equals("Online Marketing")) {
-			 * quer.put("extModeOfContact", "OnlineMarketing"); } else if
-			 * (filterData.getType().equals("Site Visit")) { quer.put("extModeOfContact",
-			 * "SiteVisitor"); } else { quer.put("extModeOfContact", filterData.getType());
-			 * } }
-			 **/
-			if (filterData.getEnquiryId() != null && !filterData.getEnquiryId().isEmpty()) {
-				sb1.append("c.enquiryId = :enquiryId AND ");
-				quer.put("enquiryId", filterData.getEnquiryId());
-			}
-
-			if (filterData.getEmployee() != null && !filterData.getEmployee().isEmpty()) {
-				sb1.append("c.employeeName = :employeeName AND ");
-				quer.put("employeeName", filterData.getEmployee());
-			}
-			String sb2 = sb1.toString().substring(0, sb1.length() - 4);
-			System.err.println("sb2 =" + sb2);
-			Query query1 = entityManager.createQuery(sb2);
-			for (Map.Entry<String, String> entry : quer.entrySet()) {
-				if (entry.getKey().equals("customerCode")) {
-					query1.setParameter(entry.getKey(), entry.getValue());
-				} else if (entry.getKey().equals("extLogDate") || entry.getKey().equals("extLogToDate")) {
-					query1.setParameter(entry.getKey(), new SimpleDateFormat("yyyy-MM-dd").parse(entry.getValue()));
+			updateDateInCustDate(custData);
+			updatePurposeInCustDate(custData);
+			if (filterData.getType() != null && !filterData.getType().isEmpty()) {
+				List<String> listOfTypeFromDb = custData.getExtModeOfContact();
+				if (listOfTypeFromDb.contains(filterData.getType())) {
+					type = true;
 				} else {
-					query1.setParameter(entry.getKey(), entry.getValue());
+					type = false;
 				}
 			}
-			List<CustData> resultList = query1.getResultList();
-			for (CustData custData : resultList) {
-				if (custData.getExtLogDate() != null) {
-					custData.setDateToDisplay(custData.getExtLogDate().toString().substring(0, 11));
-				}
+			if (filterData.getPurpose() != null && !filterData.getPurpose().isEmpty()
+					&& checkPurposeCustData(custData, filterData)) {
+				purpose = true;
 			}
-			System.err.println("resultList outside =" + resultList);
-			entityManager.close();
+			if (checkDateCustData(custData, filterData)) {
+				dateFilter = true;
+			}
+		}
+		if (type && purpose && dateFilter) {
 			return resultList;
-
-		} catch (Exception ex) {
-			System.err.println(ex.getMessage());
-			ex.printStackTrace();
-			return null;
+		} else {
+			return new ArrayList<>();
 		}
 	}
 
@@ -359,8 +236,7 @@ public class InterationLogServiceImpl {
 		customerDetails.setSubsidaryCompany(requestObject.getSubsidaryCompany());
 		customerDetails.setId(customerDetails.getId());
 		customerDetails.setCustomerName(customerDetails.getCustomerName());
-		CustomerDetails updatedObj = customerDetailsRepository.save(customerDetails);
-		return updatedObj;
+		return customerDetailsRepository.save(customerDetails);
 	}
 
 	public ContactPersonDetails updateExistingContactPersonDetailsData(ContactPersonDetails contactPersonDetails,
@@ -370,8 +246,7 @@ public class InterationLogServiceImpl {
 		contactPersonDetails.setDesignation(requestObject.getCpddesignation());
 		contactPersonDetails.setEmail(requestObject.getCpdemail());
 		contactPersonDetails.setId(contactPersonDetails.getId());
-		ContactPersonDetails updatedObj = contactPersonDetailsRepository.save(contactPersonDetails);
-		return updatedObj;
+		return contactPersonDetailsRepository.save(contactPersonDetails);
 	}
 
 	public ExtraDetails updateExistingExtraDetailsData(ExtraDetails extraDetails, RequestObject requestObject) {
@@ -383,57 +258,49 @@ public class InterationLogServiceImpl {
 		extraDetails.setLogTime(requestObject.getEmailtimePicker());
 		extraDetails.setPurposeOfEmail(requestObject.getExtraPurposeOfEmail());
 		extraDetails.setSubject(requestObject.getExtraSubject());
-		if (requestObject.getExtraEmail() != null && requestObject.getExtraEmail().equals("email")) {
+		if (requestObject.getExtraEmail() != null && requestObject.getExtraEmail().equals(propertyValues.getEmail())) {
 			extraDetails.setModeOfContact(requestObject.getExtraEmail());
 		}
-		if (requestObject.getExtraCall() != null && requestObject.getExtraCall().equals("call")) {
+		if (requestObject.getExtraCall() != null && requestObject.getExtraCall().equals(propertyValues.getCall())) {
 			extraDetails.setModeOfContact(requestObject.getExtraCall());
 		}
-		if (requestObject.getExtraSms() != null && requestObject.getExtraSms().equals("sms")) {
+		if (requestObject.getExtraSms() != null && requestObject.getExtraSms().equals(propertyValues.getSms())) {
 			extraDetails.setModeOfContact(requestObject.getExtraSms());
 		}
-		if (requestObject.getExtraSiteVisitor() != null && requestObject.getExtraSiteVisitor().equals("SiteVisitor")) {
+		if (requestObject.getExtraSiteVisitor() != null
+				&& requestObject.getExtraSiteVisitor().equals(propertyValues.getSiteVisitor())) {
 			extraDetails.setModeOfContact(requestObject.getExtraSiteVisitor());
 		}
 		if (requestObject.getExtraOnlineMarketing() != null
-				&& requestObject.getExtraOnlineMarketing().equals("OnlineMarketing")) {
+				&& requestObject.getExtraOnlineMarketing().equals(propertyValues.getOnlineMarketing())) {
 			extraDetails.setModeOfContact(requestObject.getExtraOnlineMarketing());
 		}
 		extraDetails.setId(extraDetails.getId());
-		ExtraDetails updatedObj = extraDetailsRepository.save(extraDetails);
-		return updatedObj;
+		return extraDetailsRepository.save(extraDetails);
 	}
 
 	public CustData createObject(RequestObject requestObject) throws ParseException {
 		CustData custData = new CustData();
-		if(requestObject.getFileName()!=null && requestObject.getFileName()!="") {
-			//String[] fileNameSeprator = requestObject.getFileName().split("|");
-			if(requestObject.getFileName().contains("emailFileName")) {
-				custData.setFileNameEmail(requestObject.getFileName());
-			}
+		if (requestObject.getFileName() != null && !requestObject.getFileName().isEmpty()
+				&& requestObject.getFileName().contains(propertyValues.getEmailFileName())) {
+			custData.setFileNameEmail(requestObject.getFileName());
 		}
-		if(requestObject.getFileNamecall()!=null && requestObject.getFileNamecall()!="") {
-			if(requestObject.getFileNamecall().contains("callFileName")) {
-				custData.setFileNameCall(requestObject.getFileNamecall());
-			}
+		if (requestObject.getFileNamecall() != null && !requestObject.getFileNamecall().isEmpty()
+				&& requestObject.getFileNamecall().contains(propertyValues.getCallFileName())) {
+			custData.setFileNameCall(requestObject.getFileNamecall());
 		}
-		if(requestObject.getFileNamesms()!=null && requestObject.getFileNamesms()!="") {
-			if(requestObject.getFileNamesms().contains("smsFileName")) {
-				custData.setFileNameSms(requestObject.getFileNamesms());
-			}
+		if (requestObject.getFileNamesms() != null && !requestObject.getFileNamesms().isEmpty()
+				&& requestObject.getFileNamesms().contains(propertyValues.getSmsFileName())) {
+			custData.setFileNameSms(requestObject.getFileNamesms());
 		}
-		if(requestObject.getFileNameSiteVisitor()!=null && requestObject.getFileNameSiteVisitor()!="") {
-			if(requestObject.getFileNameSiteVisitor().contains("svFileName")) {
-				custData.setFileNameSv(requestObject.getFileNameSiteVisitor());
-			}
+		if (requestObject.getFileNameSiteVisitor() != null && !requestObject.getFileNameSiteVisitor().isEmpty()
+				&& requestObject.getFileNameSiteVisitor().contains(propertyValues.getSvFileName())) {
+			custData.setFileNameSv(requestObject.getFileNameSiteVisitor());
 		}
-		if(requestObject.getFileNameOnlineMarketing()!=null && requestObject.getFileNameOnlineMarketing()!="") {
-			if(requestObject.getFileNameOnlineMarketing().contains("omFileName")) {
-				custData.setFileNameOm(requestObject.getFileNameOnlineMarketing());
-			}
+		if (requestObject.getFileNameOnlineMarketing() != null && !requestObject.getFileNameOnlineMarketing().isEmpty()
+				&& requestObject.getFileNameOnlineMarketing().contains(propertyValues.getOmFileName())) {
+			custData.setFileNameOm(requestObject.getFileNameOnlineMarketing());
 		}
-			
-		
 		custData.setState(requestObject.getState());
 		custData.setCountry(requestObject.getCountry());
 		custData.setCompany(requestObject.getCompany());
@@ -444,16 +311,14 @@ public class InterationLogServiceImpl {
 		custData.setSubsidaryChannel(requestObject.getSubsidaryChannel());
 		custData.setSubsidaryCompany(requestObject.getSubsidaryCompany());
 		if (requestObject.getId() != null && !requestObject.getId().isEmpty()) {
-			custData.setExistingFlag("true");
+			custData.setExistingFlag(propertyValues.getTrueValue());
 			custData.setCustomerCode(requestObject.getId());
 			custData.setCustomerName(requestObject.getExistingCustomerName());
 		} else {
-			custData.setExistingFlag("false");
-			Random custCode = new Random();
-			int custCodeNumber = custCode.nextInt(999999);
+			custData.setExistingFlag(propertyValues.getFalseValue());
+			int custCodeNumber = new Random().nextInt(999999);
 			custData.setCustomerCode(Integer.toString(custCodeNumber));
-			Random enquiryNumber = new Random();
-			int intEnquiryNumber = enquiryNumber.nextInt(999999);
+			int intEnquiryNumber = new Random().nextInt(999999);
 			custData.setEnquiryId(Integer.toString(intEnquiryNumber));
 			custData.setCustomerName(requestObject.getExistingCustomerName());
 		}
@@ -464,57 +329,48 @@ public class InterationLogServiceImpl {
 		custData.setExtContactNumber(requestObject.getExtraContactNo());
 		custData.setExtContactPerson(requestObject.getExtraContactPerson());
 		custData.setExtDescription(requestObject.getExtraDescription());
-
 		if (requestObject.getSelectedcalldatePicker() != null) {
-			SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd");
+			SimpleDateFormat formatter1 = new SimpleDateFormat(propertyValues.getFormatyyMMdd());
 			Date date1 = formatter1.parse(requestObject.getSelectedcalldatePicker());
 			custData.setSelectedcalldatePicker(date1);
 		}
-		// custData.setSelectedcalldatePicker(requestObject.getSelectedcalldatePicker());
 		custData.setSelectedCallContactNo(requestObject.getSelectedCallContactNo());
 		custData.setSelectedcallContactPerson(requestObject.getSelectedcallContactPerson());
 		custData.setSelectedCallDescription(requestObject.getSelectedCallDescription());
 		custData.setSelectedCallPurposeOfEmail(requestObject.getSelectedCallPurposeOfEmail());
 		custData.setSelectedcallSubject(requestObject.getSelectedcallSubject());
-
 		if (requestObject.getSelectedSmsdatePicker() != null) {
-			SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd");
+			SimpleDateFormat formatter1 = new SimpleDateFormat(propertyValues.getFormatyyMMdd());
 			Date date1 = formatter1.parse(requestObject.getSelectedSmsdatePicker());
 			custData.setSelectedSmsdatePicker(date1);
 		}
-		// custData.setSelectedSmsdatePicker(requestObject.getSelectedSmsdatePicker());
 		custData.setSelectedSmsContactNo(requestObject.getSelectedSmsContactNo());
 		custData.setSelectedSmsContactPerson(requestObject.getSelectedSmsContactPerson());
 		custData.setSelectedSmsDescription(requestObject.getSelectedSmsDescription());
 		custData.setSelectedSmsPurposeOfEmail(requestObject.getSelectedSmsPurposeOfEmail());
 		custData.setSelectedSmsSubject(requestObject.getSelectedSmsSubject());
-
 		if (requestObject.getSelectedSvidatePicker() != null) {
-			SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd");
+			SimpleDateFormat formatter1 = new SimpleDateFormat(propertyValues.getFormatyyMMdd());
 			Date date1 = formatter1.parse(requestObject.getSelectedSvidatePicker());
 			custData.setSelectedSvidatePicker(date1);
 		}
-		// custData.setSelectedSvidatePicker(requestObject.getSelectedSvidatePicker());
 		custData.setSelectedSviContactNo(requestObject.getSelectedSviContactNo());
 		custData.setSelectedSviContactPerson(requestObject.getSelectedSviContactPerson());
 		custData.setSelectedSviDescription(requestObject.getSelectedSviDescription());
 		custData.setSelectedSviPurposeOfEmail(requestObject.getSelectedSviPurposeOfEmail());
 		custData.setSelectedSviSubject(requestObject.getSelectedSviSubject());
-
 		if (requestObject.getSelectedOmidatePicker() != null) {
-			SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd");
+			SimpleDateFormat formatter1 = new SimpleDateFormat(propertyValues.getFormatyyMMdd());
 			Date date1 = formatter1.parse(requestObject.getSelectedOmidatePicker());
 			custData.setSelectedOmidatePicker(date1);
 		}
-		// custData.setSelectedOmidatePicker(requestObject.getSelectedOmidatePicker());
 		custData.setSelectedOmiContactNo(requestObject.getSelectedOmiContactNo());
 		custData.setSelectedOmiContactPerson(requestObject.getSelectedOmiContactPerson());
 		custData.setSelectedOmiDescription(requestObject.getSelectedOmiDescription());
 		custData.setSelectedOmiPurposeOfEmail(requestObject.getSelectedOmiPurposeOfEmail());
 		custData.setSelectedOmiSubject(requestObject.getSelectedOmiSubject());
-
 		if (requestObject.getEmaildatePicker() != null) {
-			SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd");
+			SimpleDateFormat formatter1 = new SimpleDateFormat(propertyValues.getFormatyyMMdd());
 			Date date1 = formatter1.parse(requestObject.getEmaildatePicker());
 			custData.setExtLogDate(date1);
 		}
@@ -522,90 +378,145 @@ public class InterationLogServiceImpl {
 		custData.setExtPurposeOfEmail(requestObject.getExtraPurposeOfEmail());
 		custData.setExtSubject(requestObject.getExtraSubject());
 		custData.setEmployeeName(requestObject.getSelectedEmployee());
-		List<String> modeOfContact = new ArrayList<String>();
-		if (requestObject.getExtraEmail() != null && requestObject.getExtraEmail().equals("email")) {
+		List<String> modeOfContact = new ArrayList<>();
+		if (requestObject.getExtraEmail() != null && requestObject.getExtraEmail().equals(propertyValues.getEmail())) {
 			modeOfContact.add(requestObject.getExtraEmail());
-			// custData.setExtModeOfContact(requestObject.getExtraEmail());
 		}
-		if (requestObject.getExtraCall() != null && requestObject.getExtraCall().equals("call")) {
+		if (requestObject.getExtraCall() != null && requestObject.getExtraCall().equals(propertyValues.getCall())) {
 			modeOfContact.add(requestObject.getExtraCall());
-			// custData.setExtModeOfContact(requestObject.getExtraCall());
 		}
-		if (requestObject.getExtraSms() != null && requestObject.getExtraSms().equals("sms")) {
+		if (requestObject.getExtraSms() != null && requestObject.getExtraSms().equals(propertyValues.getSms())) {
 			modeOfContact.add(requestObject.getExtraSms());
-			// custData.setExtModeOfContact(requestObject.getExtraSms());
 		}
-		if (requestObject.getExtraSiteVisitor() != null && requestObject.getExtraSiteVisitor().equals("SiteVisitor")) {
+		if (requestObject.getExtraSiteVisitor() != null
+				&& requestObject.getExtraSiteVisitor().equals(propertyValues.getSiteVisitor())) {
 			modeOfContact.add(requestObject.getExtraSiteVisitor());
-			// custData.setExtModeOfContact(requestObject.getExtraSiteVisitor());
 		}
 		if (requestObject.getExtraOnlineMarketing() != null
-				&& requestObject.getExtraOnlineMarketing().equals("OnlineMarketing")) {
+				&& requestObject.getExtraOnlineMarketing().equals(propertyValues.getOnlineMarketing())) {
 			modeOfContact.add(requestObject.getExtraOnlineMarketing());
-			// custData.setExtModeOfContact(requestObject.getExtraOnlineMarketing());
 		}
 		custData.setExtModeOfContact(modeOfContact);
 		custData.setSector(requestObject.getSector());
-		System.err.println("builded custdata = " + custData);
 		return custData;
-
 	}
 
-	private CustomerDetails extractCustomerDetails(RequestObject requestObject) {
-		CustomerDetails customerDetails = new CustomerDetails();
-		customerDetails.setCompany(requestObject.getCompany());
-		customerDetails.setIndustry(requestObject.getIndustry());
-		customerDetails.setParentCompany(requestObject.getParentCompany());
-		customerDetails.setSegment(requestObject.getSegment());
-		customerDetails.setSubsidaryArea(requestObject.getSubsidaryArea());
-		customerDetails.setSubsidaryChannel(requestObject.getSubsidaryChannel());
-		customerDetails.setSubsidaryCompany(requestObject.getSubsidaryCompany());
-		if (requestObject.getNewCustomerName() != null && !requestObject.getNewCustomerName().isEmpty()) {
-			customerDetails.setExistingFlag("false");
-			customerDetails.setCustomerName(requestObject.getNewCustomerName());
-		} else {
-			customerDetails.setExistingFlag("true");
-			customerDetails.setCustomerName(requestObject.getExistingCustomerName());
+	public List<CustData> formatOutputDate(List<CustData> listCustData) throws ParseException {
+		if (isNullOrEmpty(listCustData)) {
+			for (CustData cust : listCustData) {
+				if (cust.getExtLogDate() != null) {
+					Date date = inputFormat().parse(cust.getExtLogDate().toString());
+					cust.setDateToDisplay(outputFormat().format(date));
+				}
+				if (cust.getSelectedcalldatePicker() != null) {
+					Date date = inputFormat().parse(cust.getSelectedcalldatePicker().toString());
+					cust.setDateToDisplay(outputFormat().format(date));
+				}
+				if (cust.getSelectedSmsdatePicker() != null) {
+					Date date = inputFormat().parse(cust.getSelectedSmsdatePicker().toString());
+					cust.setDateToDisplay(outputFormat().format(date));
+				}
+				if (cust.getSelectedSvidatePicker() != null) {
+					Date date = inputFormat().parse(cust.getSelectedSvidatePicker().toString());
+					cust.setDateToDisplay(outputFormat().format(date));
+				}
+				if (cust.getSelectedOmidatePicker() != null) {
+					Date date = inputFormat().parse(cust.getSelectedOmidatePicker().toString());
+					cust.setDateToDisplay(outputFormat().format(date));
+				}
+				if (cust.getExtPurposeOfEmail() != null) {
+					cust.setExtPurposeOfEmail(cust.getExtPurposeOfEmail());
+				}
+				if (cust.getSelectedCallPurposeOfEmail() != null) {
+					cust.setExtPurposeOfEmail(cust.getSelectedCallPurposeOfEmail());
+				}
+				if (cust.getSelectedSmsPurposeOfEmail() != null) {
+					cust.setExtPurposeOfEmail(cust.getSelectedSmsPurposeOfEmail());
+				}
+				if (cust.getSelectedSviPurposeOfEmail() != null) {
+					cust.setExtPurposeOfEmail(cust.getSelectedSviPurposeOfEmail());
+				}
+				if (cust.getSelectedOmiPurposeOfEmail() != null) {
+					cust.setExtPurposeOfEmail(cust.getSelectedOmiPurposeOfEmail());
+				}
+			}
 		}
-		return customerDetails;
+		return listCustData;
 	}
 
-	private ContactPersonDetails extractContactPersonDetails(RequestObject requestObject) {
-		ContactPersonDetails contactPersonDetails = new ContactPersonDetails();
-		contactPersonDetails.setCompany(requestObject.getCpdcompany());
-		contactPersonDetails.setContactPerson(requestObject.getCpdcontactperson());
-		contactPersonDetails.setDesignation(requestObject.getCpddesignation());
-		contactPersonDetails.setEmail(requestObject.getCpdemail());
-		return contactPersonDetails;
+	public CustData formatOutputStructure(CustData custData) throws ParseException {
+		if (custData != null && !custData.getExtModeOfContact().isEmpty()) {
+			List<String> typeList = custData.getExtModeOfContact();
+			for (String type : typeList) {
+				if (type != null) {
+					if (type.equals(propertyValues.getEmail())) {
+						custData.setModeOfContactEmail(type);
+					}
+					if (type.equals(propertyValues.getCall())) {
+						custData.setModeOfContactCall(type);
+					}
+					if (type.equals(propertyValues.getSms())) {
+						custData.setModeOfContactSms(type);
+					}
+					if (type.equals(propertyValues.getSiteVisitor())) {
+						custData.setModeOfContactSiteVisit(type);
+					}
+					if (type.equals(propertyValues.getOnlineMarketing())) {
+						custData.setModeOfContactOnlineMeeting(type);
+					}
+					DateFormat inputFormat1 = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.S");
+					DateFormat outputFormat = new SimpleDateFormat("dd-MM-yyyy");
+					if (custData.getExtLogDate() != null) {
+						Date date = inputFormat1.parse(custData.getExtLogDate().toString());
+						custData.setDateToDisplay(outputFormat.format(date));
+					}
+					if (custData.getSelectedcalldatePicker() != null) {
+						Date date = inputFormat1.parse(custData.getSelectedcalldatePicker().toString());
+						custData.setDateToDisplay(outputFormat.format(date));
+					}
+					if (custData.getSelectedSmsdatePicker() != null) {
+						Date date = inputFormat1.parse(custData.getSelectedSmsdatePicker().toString());
+						custData.setDateToDisplay(outputFormat.format(date));
+					}
+					if (custData.getSelectedSvidatePicker() != null) {
+						Date date = inputFormat1.parse(custData.getSelectedSvidatePicker().toString());
+						custData.setDateToDisplay(outputFormat.format(date));
+					}
+					if (custData.getSelectedOmidatePicker() != null) {
+						Date date = inputFormat1.parse(custData.getSelectedOmidatePicker().toString());
+						custData.setDateToDisplay(outputFormat.format(date));
+					}
+					if (custData.getExtPurposeOfEmail() != null) {
+						custData.setExtPurposeOfEmail(custData.getExtPurposeOfEmail());
+					}
+					if (custData.getSelectedCallPurposeOfEmail() != null) {
+						custData.setExtPurposeOfEmail(custData.getSelectedCallPurposeOfEmail());
+					}
+					if (custData.getSelectedSmsPurposeOfEmail() != null) {
+						custData.setExtPurposeOfEmail(custData.getSelectedSmsPurposeOfEmail());
+					}
+					if (custData.getSelectedSviPurposeOfEmail() != null) {
+						custData.setExtPurposeOfEmail(custData.getSelectedSviPurposeOfEmail());
+					}
+					if (custData.getSelectedOmiPurposeOfEmail() != null) {
+						custData.setExtPurposeOfEmail(custData.getSelectedOmiPurposeOfEmail());
+					}
+
+				}
+			}
+		}
+		return custData;
 	}
 
-	private ExtraDetails extractExtraDetails(RequestObject requestObject) {
-		ExtraDetails extraDetails = new ExtraDetails();
-		extraDetails.setAttachmet(requestObject.getExtraAttachment());
-		extraDetails.setContactNumber(requestObject.getExtraContactNo());
-		extraDetails.setContactPerson(requestObject.getExtraContactPerson());
-		extraDetails.setDescription(requestObject.getExtraDescription());
-		extraDetails.setLogDate(requestObject.getEmaildatePicker());
-		extraDetails.setLogTime(requestObject.getEmailtimePicker());
-		extraDetails.setPurposeOfEmail(requestObject.getExtraPurposeOfEmail());
-		extraDetails.setSubject(requestObject.getExtraSubject());
-		if (requestObject.getExtraEmail() != null && requestObject.getExtraEmail().equals("email")) {
-			extraDetails.setModeOfContact(requestObject.getExtraEmail());
-		}
-		if (requestObject.getExtraCall() != null && requestObject.getExtraCall().equals("call")) {
-			extraDetails.setModeOfContact(requestObject.getExtraCall());
-		}
-		if (requestObject.getExtraSms() != null && requestObject.getExtraSms().equals("sms")) {
-			extraDetails.setModeOfContact(requestObject.getExtraSms());
-		}
-		if (requestObject.getExtraSiteVisitor() != null && requestObject.getExtraSiteVisitor().equals("SiteVisitor")) {
-			extraDetails.setModeOfContact(requestObject.getExtraSiteVisitor());
-		}
-		if (requestObject.getExtraOnlineMarketing() != null
-				&& requestObject.getExtraOnlineMarketing().equals("OnlineMarketing")) {
-			extraDetails.setModeOfContact(requestObject.getExtraOnlineMarketing());
-		}
-		return extraDetails;
+	public boolean isNullOrEmpty(final Collection<?> collection) {
+		return collection == null || collection.isEmpty();
 	}
 
+	public DateFormat inputFormat() {
+		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.S");
+	}
+
+	public DateFormat outputFormat() {
+		return new SimpleDateFormat("dd-MM-yyyy");
+	}
 }

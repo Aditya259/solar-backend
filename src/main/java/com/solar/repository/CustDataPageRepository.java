@@ -10,6 +10,6 @@ import com.solar.model.CustData;
 
 @Repository
 @Transactional
-public interface CustDataPageRepository extends PagingAndSortingRepository<CustData, Integer>{
+public interface CustDataPageRepository extends PagingAndSortingRepository<CustData, Integer> {
 	Page<CustData> findAll(Pageable pageable);
 }

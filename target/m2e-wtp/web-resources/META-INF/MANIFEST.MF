@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Built-By: aditya
+Build-Jdk: 17.0.2
+Implementation-Title: SolarProject
+Implementation-Version: 0.0.1-SNAPSHOT
+Implementation-Vendor-Id: com.tushar
+Implementation-URL: https://projects.spring.io/spring-boot/#/spring-boot
+ -starter-parent/SolarProject
+Created-By: Maven Integration for Eclipse
+
